@@ -54,6 +54,16 @@ export const appRouter = router({
         counter: await ctx.counter.reset()
       };
     }),
+    watch: counterProcedure.subscription(async function* (opts) {
+      const { counter } = opts.ctx;
+      let count = await counter.value();
+
+      while (true) {
+        yield { count };
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        count = await counter.value();
+      }
+    })
   }),
 });
 

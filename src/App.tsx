@@ -4,23 +4,31 @@ import viteLogo from "/vite.svg";
 import cloudflareLogo from "./assets/Cloudflare_Logo.svg";
 import "./App.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
 import { trpc } from "./trpc";
 
 // Create query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true
-    }
-  }
+      refetchOnWindowFocus: true,
+    },
+  },
 });
 
 // Create tRPC client
 const trpcClient = trpc.createClient({
   links: [
-    httpBatchLink({
-      url: "/trpc",
+    splitLink({
+      condition(op) {
+        return op.type === "subscription";
+      },
+      false: httpBatchLink({
+        url: "/trpc",
+      }),
+      true: httpSubscriptionLink({
+        url: "/trpc",
+      }),
     }),
   ],
 });
@@ -34,18 +42,12 @@ function AppContent() {
   const user = trpc.getUser.useQuery();
 
   // Counter Durable Object hooks
-  const counterQuery = trpc.counter.get.useQuery(
-    { counterSession: "global" }
-  );
-  const incrementMutation = trpc.counter.increment.useMutation({
-    onSuccess: () => counterQuery.refetch(),
+  const counterQuery = trpc.counter.watch.useSubscription({
+    counterSession: "global",
   });
-  const decrementMutation = trpc.counter.decrement.useMutation({
-    onSuccess: () => counterQuery.refetch(),
-  });
-  const resetMutation = trpc.counter.reset.useMutation({
-    onSuccess: () => counterQuery.refetch(),
-  });
+  const incrementMutation = trpc.counter.increment.useMutation();
+  const decrementMutation = trpc.counter.decrement.useMutation();
+  const resetMutation = trpc.counter.reset.useMutation();
 
   return (
     <>
@@ -127,7 +129,7 @@ function AppContent() {
             -
           </button>
           <span className="counter-value">
-            {counterQuery.isLoading ? "Loading..." : counterQuery.data?.counter}
+            {counterQuery.status !== 'pending' ? "Connection..." : counterQuery.data?.count}
           </span>
           <button
             onClick={() =>

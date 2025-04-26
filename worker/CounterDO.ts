@@ -14,7 +14,7 @@ export class CounterDO extends DurableObject<Env> {
     
     this.state = state;
   }
-
+  
   async value() {
     if (this.count === null) {
       this.count = await this.state.storage.get('count') || 0;
