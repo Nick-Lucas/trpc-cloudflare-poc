@@ -99,7 +99,7 @@ export const appRouter = router({
 
       try {
         console.log("[AppRouter:Counter:watch] Listening for messages");
-        
+
         for await (const vals of on(ee, "message")) {
           console.log("[AppRouter:Counter:watch] Received message", vals);
 
@@ -107,12 +107,6 @@ export const appRouter = router({
             yield Schema.parse(JSON.parse(val));
           }
         }
-      } catch (err) {
-        console.error("[AppRouter:Counter:watch] Error in subscription", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Error in subscription",
-        });
       } finally {
         console.log("[AppRouter:Counter:watch] Cleaning up WebSocket");
         response.webSocket.close();
