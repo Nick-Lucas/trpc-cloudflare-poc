@@ -45,7 +45,8 @@ function AppContent() {
   const counterQuery = trpc.counter.watch.useSubscription({
     counterSession: "global",
   });
-  console.log("Counter Query:", counterQuery.data);
+  console.log("Counter Query:", counterQuery);
+  
   const incrementMutation = trpc.counter.increment.useMutation();
   const decrementMutation = trpc.counter.decrement.useMutation();
   const resetMutation = trpc.counter.reset.useMutation();
