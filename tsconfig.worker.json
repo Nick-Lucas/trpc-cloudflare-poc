@@ -4,5 +4,5 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
     "types": ["@cloudflare/workers-types/2023-07-01", "vite/client"]
   },
-  "include": ["./worker-configuration.d.ts", "./worker"]
+  "include": ["./worker-configuration.d.ts", "./worker", "trpc"]
 }

@@ -8,7 +8,13 @@ import { httpBatchLink } from "@trpc/client";
 import { trpc } from "./trpc";
 
 // Create query client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true
+    }
+  }
+});
 
 // Create tRPC client
 const trpcClient = trpc.createClient({
@@ -29,10 +35,7 @@ function AppContent() {
 
   // Counter Durable Object hooks
   const counterQuery = trpc.counter.get.useQuery(
-    { counterSession: "global" },
-    {
-      refetchOnWindowFocus: false,
-    }
+    { counterSession: "global" }
   );
   const incrementMutation = trpc.counter.increment.useMutation({
     onSuccess: () => counterQuery.refetch(),
@@ -124,7 +127,7 @@ function AppContent() {
             -
           </button>
           <span className="counter-value">
-            {counterQuery.isLoading ? "Loading..." : counterQuery.data?.count}
+            {counterQuery.isLoading ? "Loading..." : counterQuery.data?.counter}
           </span>
           <button
             onClick={() =>
