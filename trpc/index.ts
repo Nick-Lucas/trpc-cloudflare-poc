@@ -70,6 +70,9 @@ export const appRouter = router({
           message: "Failed to upgrade to WebSocket",
         });
       }
+
+      // We have to accept here as well on the durable object to establish the connection.
+      // The DO will hibernate but the worker will probably not which may not be ideal for costs
       response.webSocket.accept();
 
       // Need node compat in cloudflare for this to work
