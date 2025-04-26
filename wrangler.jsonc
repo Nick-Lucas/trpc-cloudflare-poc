@@ -32,7 +32,7 @@
 	"migrations": [
 		{
 			"tag": "v1",
-			"new_classes": ["CounterDO"]
+			"new_sqlite_classes": ["CounterDO"]
 		}
 	]
 
