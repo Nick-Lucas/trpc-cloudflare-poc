@@ -26,6 +26,20 @@ function AppContent() {
   // Use tRPC query hooks
   const hello = trpc.hello.useQuery({ name: 'tRPC' });
   const user = trpc.getUser.useQuery();
+  
+  // Counter Durable Object hooks
+  const counterQuery = trpc.counter.get.useQuery(undefined, {
+    refetchOnWindowFocus: false
+  });
+  const incrementMutation = trpc.counter.increment.useMutation({
+    onSuccess: () => counterQuery.refetch()
+  });
+  const decrementMutation = trpc.counter.decrement.useMutation({
+    onSuccess: () => counterQuery.refetch()
+  });
+  const resetMutation = trpc.counter.reset.useMutation({
+    onSuccess: () => counterQuery.refetch()
+  });
 
   return (
     <>
@@ -68,7 +82,7 @@ function AppContent() {
         </p>
       </div>
       
-      {/* tRPC data display */}
+      {/* tRPC Data */}
       <div className='card'>
         <h3>tRPC Data:</h3>
         {hello.isLoading ? (
@@ -86,6 +100,40 @@ function AppContent() {
         ) : (
           <p>User: {user.data?.name} (ID: {user.data?.id})</p>
         )}
+      </div>
+      
+      {/* Durable Object Counter */}
+      <div className='card'>
+        <h3>Durable Object Counter:</h3>
+        <div className="counter-controls">
+          <button 
+            onClick={() => decrementMutation.mutate()}
+            disabled={decrementMutation.isPending}
+          >
+            -
+          </button>
+          <span className="counter-value">
+            {counterQuery.isLoading ? 
+              'Loading...' : 
+              counterQuery.data?.count}
+          </span>
+          <button 
+            onClick={() => incrementMutation.mutate()}
+            disabled={incrementMutation.isPending}
+          >
+            +
+          </button>
+        </div>
+        <button 
+          onClick={() => resetMutation.mutate()}
+          disabled={resetMutation.isPending}
+          className="reset-button"
+        >
+          Reset Counter
+        </button>
+        <p>
+          This counter persists across page refreshes and is shared across all users!
+        </p>
       </div>
       
       <p className='read-the-docs'>

@@ -43,3 +43,32 @@
 .read-the-docs {
 	color: #888;
 }
+
+.counter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.counter-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.counter-controls button {
+  font-size: 1.2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-button {
+  margin-bottom: 1rem;
+}
