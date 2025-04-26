@@ -2,17 +2,13 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { CounterDO } from "./CounterDO";
 import { appRouter, Context } from "../trpc";
 
-
 const createContext = (env: Env, req: Request): Context => ({
   env,
   req,
 });
 
 export default {
-  async fetch(
-    request: Request,
-    env: Env
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     // Handle tRPC requests
@@ -38,5 +34,4 @@ export default {
   },
 };
 
-// Export the Durable Object class
 export { CounterDO };

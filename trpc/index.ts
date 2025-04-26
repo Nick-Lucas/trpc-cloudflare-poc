@@ -1,5 +1,6 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { EventEmitter, on } from "node:events";
 
 const t = initTRPC.context<Context>().create();
 const publicProcedure = t.procedure;
@@ -19,7 +20,7 @@ const counterProcedure = publicProcedure
   });
 
 export const appRouter = router({
-  hello: publicProcedure  
+  hello: publicProcedure
     .input(z.object({ name: z.string().optional() }))
     .query(({ input }) => {
       return {
@@ -36,34 +37,77 @@ export const appRouter = router({
   counter: router({
     get: counterProcedure.query(async ({ ctx }) => {
       return {
-        counter: await ctx.counter.value()
+        counter: await ctx.counter.value(),
       };
     }),
     increment: counterProcedure.mutation(async ({ ctx }) => {
       return {
-        counter: await ctx.counter.increment()
+        counter: await ctx.counter.increment(),
       };
     }),
     decrement: counterProcedure.mutation(async ({ ctx }) => {
       return {
-        counter: await ctx.counter.decrement()
+        counter: await ctx.counter.decrement(),
       };
     }),
     reset: counterProcedure.mutation(async ({ ctx }) => {
       return {
-        counter: await ctx.counter.reset()
+        counter: await ctx.counter.reset(),
       };
     }),
     watch: counterProcedure.subscription(async function* (opts) {
       const { counter } = opts.ctx;
-      let count = await counter.value();
 
-      while (true) {
-        yield { count };
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        count = await counter.value();
+      const headers = new Headers();
+      headers.set("Upgrade", "websocket");
+      const response = await counter.fetch("http://do/subscribe", {
+        headers: headers,
+      });
+
+      if (!response.webSocket) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upgrade to WebSocket",
+        });
       }
-    })
+      response.webSocket.accept();
+
+      // Need node compat in cloudflare for this to work
+      const ee = new EventEmitter();
+      response.webSocket.addEventListener("message", (event) => {
+        ee.emit("message", event.data);
+      });
+
+      const Schema = z.object({
+        count: z.number(),
+      });
+
+      // EventSource does not queue messages so we must subscribe a little after we start reading it
+      setTimeout(() => {
+        response.webSocket!.send("SUBSCRIBE");
+      }, 0);
+
+      try {
+        console.log("[AppRouter:Counter:watch] Listening for messages");
+        for await (const vals of on(ee, "message")) {
+          console.log("[AppRouter:Counter:watch] Received message", vals);
+
+          for (const val of vals) {
+            yield Schema.parse(JSON.parse(val));
+          }
+        }
+      } catch (err) {
+        console.error("[AppRouter:Counter:watch] Error in subscription", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Error in subscription",
+        });
+      } finally {
+        console.log("[AppRouter:Counter:watch] Cleaning up WebSocket");
+        response.webSocket.close();
+        ee.removeAllListeners("message");
+      }
+    }),
   }),
 });
 
