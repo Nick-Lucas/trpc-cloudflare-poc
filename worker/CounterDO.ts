@@ -63,7 +63,9 @@ export class CounterDO extends DurableObject<Env> {
     console.log("[CounterDO:webSocketMessage] Received message", message);
     if (message === "SUBSCRIBE") {
       this.clients.add(ws);
-      this.broadcastUpdate(); // Lazy but just broadcast to everyone whenever someone connects, it will be fine
+
+      // Lazy implementation but just broadcast to everyone whenever someone connects, it will be fine for a POC
+      this.broadcastUpdate(); 
     }
   }
 

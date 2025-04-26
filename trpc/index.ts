@@ -58,6 +58,11 @@ export const appRouter = router({
     watch: counterProcedure.subscription(async function* (opts) {
       const { counter } = opts.ctx;
 
+      // Because we want to proxy in a typesafe way from tRPC
+      // we have to set up a WebSocket connection to the Durable Object directly
+      // Normally you would pass a request directly from the worker to the Durable Object 
+      // which I believe means the worker can normnally shut down, but not here
+      // This is probably a bit of a hack as a result
       const headers = new Headers();
       headers.set("Upgrade", "websocket");
       const response = await counter.fetch("http://do/subscribe", {
@@ -81,17 +86,20 @@ export const appRouter = router({
         ee.emit("message", event.data);
       });
 
+      // WS on Durable Objects can't be type-safe, but we can at least validate the data
       const Schema = z.object({
         count: z.number(),
       });
 
-      // EventSource does not queue messages so we must subscribe a little after we start reading it
+      // EventSource does not queue messages so we must subscribe a 
+      // little after we start reading it to not miss the initial state
       setTimeout(() => {
         response.webSocket!.send("SUBSCRIBE");
       }, 0);
 
       try {
         console.log("[AppRouter:Counter:watch] Listening for messages");
+        
         for await (const vals of on(ee, "message")) {
           console.log("[AppRouter:Counter:watch] Received message", vals);
 
